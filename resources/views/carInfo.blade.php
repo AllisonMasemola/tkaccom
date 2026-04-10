@@ -142,9 +142,10 @@
                             </div>
                         </div>
                     </div>
-                    <button class="w-full premium-gradient text-white py-4 rounded-md font-headline font-extrabold text-lg transition-transform active:scale-95 shadow-lg shadow-secondary/20">
+                    <a href="{{ route('checkout', ['type' => 'prestige', 'id' => $property->id]) }}"
+                       class="block w-full text-center premium-gradient text-white py-4 rounded-md font-headline font-extrabold text-lg transition-transform active:scale-95 shadow-lg shadow-secondary/20">
                         Rent This Car
-                    </button>
+                    </a>
                     <p class="text-center text-on-surface-variant/60 text-xs mt-6 px-4">
                         By clicking "Rent This Car", you agree to our prestige rental protocol and insurance verification.
                     </p>

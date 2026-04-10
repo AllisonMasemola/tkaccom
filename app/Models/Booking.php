@@ -27,7 +27,20 @@ class Booking extends Model
     protected $casts = [
         'date_in'  => 'datetime',
         'date_out' => 'datetime',
+        // Explicit string cast to prevent boolean coercion from the old schema
+        'status'   => 'string',
     ];
+
+    /**
+     * Calculate the total booking amount based on the bookable's nightly/daily price.
+     * Falls back to the raw price if dates are identical.
+     */
+    public function getTotalAmountAttribute(): float
+    {
+        $units = max(1, (int) $this->date_in?->diffInDays($this->date_out));
+
+        return (float) ($this->bookable?->price ?? 0) * $units;
+    }
 
     /**
      * Get the owning bookable model (Accommodation or Prestige).

@@ -96,7 +96,7 @@
                             <a href="{{ route('accommodationInfo', $property->id) }}" class="flex-1 py-3 text-xs font-bold uppercase tracking-widest text-on-surface border-b border-outline-variant/30 hover:border-secondary transition-colors text-center">
                                 View Details
                             </a>
-                            <a href="{{ route('checkout', $property->id) }}" class="flex-1 py-3 bg-gradient-to-r from-secondary to-secondary-container text-white text-xs font-bold uppercase tracking-widest rounded-lg active:scale-95 transition-transform text-center">
+                            <a href="{{ route('checkout', ['type' => 'accommodation', 'id' => $property->id]) }}" class="flex-1 py-3 bg-gradient-to-r from-secondary to-secondary-container text-white text-xs font-bold uppercase tracking-widest rounded-lg active:scale-95 transition-transform text-center">
                                 Book Now
                             </a>
                         </div>
