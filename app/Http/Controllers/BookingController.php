@@ -89,11 +89,21 @@ class BookingController extends Controller
             $request->validated('bookable_id'),
         );
 
+        // Compute total server-side — never trust a client-submitted amount.
+        // Use ceil() to match the frontend's Math.ceil(diffMs / 86_400_000),
+        // so partial days/nights always round up to a full billable unit.
+        $dateIn      = new \Carbon\Carbon($request->validated('date_in'));
+        $dateOut     = new \Carbon\Carbon($request->validated('date_out'));
+        $diffSeconds = $dateIn->diffInSeconds($dateOut);
+        $units       = (int) ceil($diffSeconds / 86400);
+        $totalAmount = round($units * $bookable->price, 2);
+
         $booking = $bookable->bookings()->create([
             ...$request->safe()->except(['bookable_type', 'bookable_id']),
             'booking_id'     => 'BK-' . strtoupper(Str::random(8)),
             'status'         => 'pending',
             'payment_status' => 'unpaid',
+            'total_amount'   => $totalAmount,
         ]);
 
         // Reload the bookable relation so the email template can reference it

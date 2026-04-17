@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Accommodation;
 use App\Models\Booking;
 use App\Models\Prestige;
+use App\Services\PayFastIpnService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 class PayFastController extends Controller
 {
@@ -94,15 +97,14 @@ class PayFastController extends Controller
 
         $nameParts = explode(' ', trim($booking->customer_name), 2);
 
-        // Build params in the exact order PayFast expects them.
-        // array_filter removes empty strings so optional fields are never sent
-        // or signed — an empty name_last in the POST but not in the signature
-        // (or vice-versa) is a guaranteed mismatch.
+        // Embed the booking ref into the return and cancel URLs so PayFast
+        // redirects the customer back to their specific booking context.
+        // These URLs are included in the signed params — the ref is part of the signature.
         $params = array_filter([
             'merchant_id'   => config('services.payfast.merchant_id'),
             'merchant_key'  => config('services.payfast.merchant_key'),
-            'return_url'    => route('payfast.return'),
-            'cancel_url'    => route('payfast.cancel'),
+            'return_url'    => route('payfast.return', $booking->booking_id),
+            'cancel_url'    => route('payfast.cancel', $booking->booking_id),
             'notify_url'    => route('payfast.notify'),
             'name_first'    => $nameParts[0],
             'name_last'     => $nameParts[1] ?? '',
@@ -124,25 +126,75 @@ class PayFastController extends Controller
         ]);
     }
 
-    public function return()
+    /**
+     * Post-payment return page.
+     *
+     * PayFast redirects the customer here after they complete (or attempt) payment.
+     * This is a browser redirect — it fires concurrently with the IPN and must
+     * NOT be used to update payment status. Do not trust query params.
+     * The IPN handler is the single authoritative source for status changes.
+     *
+     * We show the booking summary and let the customer know their payment is
+     * being processed, regardless of whether the IPN has arrived yet.
+     */
+    public function return(string $bookingRef): View
     {
-        return 'Payment successful!';
+        $booking = Booking::with('bookable')
+            ->where('booking_id', $bookingRef)
+            ->firstOrFail();
+
+        return view('payfast.payment-return', compact('booking'));
     }
 
-    public function cancel()
+    /**
+     * Payment cancellation page.
+     *
+     * PayFast redirects here when the customer abandons the payment form.
+     * The booking remains confirmed — the customer can pay later via the
+     * original payment link in their email.
+     */
+    public function cancel(string $bookingRef): View
     {
-        return 'Payment cancelled.';
+        $booking = Booking::with('bookable')
+            ->where('booking_id', $bookingRef)
+            ->firstOrFail();
+
+        return view('payfast.payment-cancelled', compact('booking'));
     }
 
-    public function notify(Request $request)
+    public function notify(Request $request, PayFastIpnService $ipnService): Response
     {
-        // Validate IPN signature before trusting data (critical in production)
+        $bookingRef = $request->input('m_payment_id');
+
+        $booking = Booking::where('booking_id', $bookingRef)->first();
+
+        // Unknown booking — return 200 so PayFast does not keep retrying; log for ops.
+        if (!$booking) {
+            \Log::warning('PayFast IPN: received notification for unknown booking', [
+                'm_payment_id' => $bookingRef,
+                'ip'           => $request->ip(),
+            ]);
+
+            return response('OK', 200);
+        }
+
+        // All four validation steps must pass before we trust this notification.
+        if (!$ipnService->validate($request, $booking)) {
+            // Return 200 to prevent PayFast retry storms; the failure is already logged.
+            return response('OK', 200);
+        }
+
         $paymentStatus = $request->input('payment_status');
-        $bookingRef    = $request->input('m_payment_id');
 
         if ($paymentStatus === 'COMPLETE') {
-            Booking::where('booking_id', $bookingRef)
-                ->update(['payment_status' => 'paid', 'status' => 'completed']);
+            $booking->update([
+                'payment_status' => 'paid',
+                'status'         => 'completed',
+            ]);
+        } elseif ($paymentStatus === 'FAILED') {
+            $booking->update(['payment_status' => 'failed']);
+        } elseif ($paymentStatus === 'CANCELLED') {
+            $booking->update(['payment_status' => 'cancelled']);
         }
 
         return response('OK', 200);

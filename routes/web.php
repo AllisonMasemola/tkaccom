@@ -23,9 +23,11 @@ Route::get('/accommodation/{accommodationId}/accommodation-info', [Accommodation
 Route::get('/transport', [PrestigeController::class, 'index'])->name('transport');
 Route::get('/car/{carId}/car-info', [PrestigeController::class, 'show'])->name('carInfo');
 
-// PayFast payment gateway hooks
-Route::get('/payfast/return', [PayFastController::class, 'return'])->name('payfast.return');
-Route::get('/payfast/cancel', [PayFastController::class, 'cancel'])->name('payfast.cancel');
+// PayFast payment gateway hooks.
+// {bookingRef} is embedded into return/cancel URLs at signing time (payBooking()),
+// so PayFast returns the customer straight back to their booking context.
+Route::get('/payfast/return/{bookingRef}', [PayFastController::class, 'return'])->name('payfast.return');
+Route::get('/payfast/cancel/{bookingRef}', [PayFastController::class, 'cancel'])->name('payfast.cancel');
 Route::post('/payfast/notify', [PayFastController::class, 'notify'])->name('payfast.notify');
 
 // Booking lifecycle pages — publicly accessible via booking reference

@@ -105,6 +105,7 @@
             <div class="relative">
               <label class="block text-xs font-bold text-outline uppercase tracking-wider mb-2">Check In</label>
               <input class="w-full bg-transparent border-0 border-b border-outline-variant/40 py-3 focus:ring-0 focus:border-secondary transition-colors @error('date_in') border-error @enderror"
+                     id="date_in"
                      type="datetime-local"
                      name="date_in"
                      value="{{ old('date_in', $now) }}"/>
@@ -116,6 +117,7 @@
             <div class="relative">
               <label class="block text-xs font-bold text-outline uppercase tracking-wider mb-2">Check Out</label>
               <input class="w-full bg-transparent border-0 border-b border-outline-variant/40 py-3 focus:ring-0 focus:border-secondary transition-colors @error('date_out') border-error @enderror"
+                     id="date_out"
                      type="datetime-local"
                      name="date_out"
                      value="{{ old('date_out', $now) }}"/>
@@ -182,13 +184,24 @@
           </div>
 
           <!-- Pricing breakdown -->
-          <div class="space-y-4 pt-6 border-t border-outline-variant/10">
+          <div class="space-y-4 pt-6 border-t border-outline-variant/10"
+               data-price="{{ $bookable->price }}"
+               data-unit="{{ $isAccommodation ? 'night' : 'day' }}">
             <div class="flex justify-between text-sm">
               <span class="text-on-surface-variant">Rate</span>
               <span class="font-medium">R{{ number_format($bookable->price, 2) }} {{ $unitLabel }}</span>
             </div>
-            <div class="flex justify-between text-sm text-on-surface-variant/60 italic">
-              <span>Total calculated after dates confirmed</span>
+            {{-- Duration row — hidden until both dates are valid --}}
+            <div id="duration-row" class="justify-between text-sm text-on-surface-variant hidden">
+              <span id="duration-label">0 nights</span>
+              <span id="duration-rate"></span>
+            </div>
+            {{-- Total row --}}
+            <div class="flex justify-between items-center pt-3 border-t border-outline-variant/10">
+              <span class="text-sm font-bold text-on-surface">Grand Total</span>
+              <span id="total-price" class="text-lg font-extrabold text-secondary">
+                —
+              </span>
             </div>
           </div>
 
@@ -226,3 +239,69 @@
 </main>
 
 @include('partials/footer')
+
+<script>
+  (function () {
+    const dateIn    = document.getElementById('date_in');
+    const dateOut   = document.getElementById('date_out');
+    const pricing   = document.querySelector('[data-price]');
+
+    if (!dateIn || !dateOut || !pricing) return;
+
+    const ratePerUnit = parseFloat(pricing.dataset.price);
+    const unit        = pricing.dataset.unit; // 'night' | 'day'
+
+    const durationRow  = document.getElementById('duration-row');
+    const durationLabel = document.getElementById('duration-label');
+    const durationRate  = document.getElementById('duration-rate');
+    const totalPrice    = document.getElementById('total-price');
+
+    function formatZAR(amount) {
+      return 'R' + amount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function recalculate() {
+      const inVal  = dateIn.value;
+      const outVal = dateOut.value;
+
+      // Both dates must be filled and check-out must be after check-in.
+      if (!inVal || !outVal) {
+        totalPrice.textContent = '—';
+        durationRow.classList.remove('flex');
+        durationRow.classList.add('hidden');
+        return;
+      }
+
+      const msIn   = new Date(inVal).getTime();
+      const msOut  = new Date(outVal).getTime();
+      const diffMs = msOut - msIn;
+
+      if (diffMs <= 0) {
+        totalPrice.textContent = '—';
+        durationRow.classList.remove('flex');
+        durationRow.classList.add('hidden');
+        dateOut.setCustomValidity('Check-out must be after check-in.');
+        return;
+      }
+
+      dateOut.setCustomValidity('');
+
+      // Round up any partial day/night to a full unit.
+      const units = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const total = ratePerUnit * units;
+
+      durationLabel.textContent = units + ' ' + (units === 1 ? unit : unit + 's');
+      durationRate.textContent  = formatZAR(ratePerUnit) + ' × ' + units;
+      // Swap hidden for flex to reveal the duration row.
+      durationRow.classList.remove('hidden');
+      durationRow.classList.add('flex');
+      totalPrice.textContent = formatZAR(total);
+    }
+
+    dateIn.addEventListener('change', recalculate);
+    dateOut.addEventListener('change', recalculate);
+
+    // Run on load in case old() values are restored after validation failure.
+    recalculate();
+  })();
+</script>

@@ -20,27 +20,19 @@ class Booking extends Model
         'customer_phone',
         'status',
         'payment_status',
+        'total_amount',
         'special_request',
         'email_notification',
     ];
 
     protected $casts = [
-        'date_in'  => 'datetime',
-        'date_out' => 'datetime',
+        'date_in'      => 'datetime',
+        'date_out'     => 'datetime',
         // Explicit string cast to prevent boolean coercion from the old schema
-        'status'   => 'string',
+        'status'       => 'string',
+        // Stored as DECIMAL(10,2); cast to float for arithmetic use in PayFast etc.
+        'total_amount' => 'float',
     ];
-
-    /**
-     * Calculate the total booking amount based on the bookable's nightly/daily price.
-     * Falls back to the raw price if dates are identical.
-     */
-    public function getTotalAmountAttribute(): float
-    {
-        $units = max(1, (int) $this->date_in?->diffInDays($this->date_out));
-
-        return (float) ($this->bookable?->price ?? 0) * $units;
-    }
 
     /**
      * Get the owning bookable model (Accommodation or Prestige).
