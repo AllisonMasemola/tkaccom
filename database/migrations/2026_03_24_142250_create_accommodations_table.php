@@ -16,11 +16,12 @@ return new class extends Migration
             $table->string('name');
             $table->text('description');
             $table->string('location')->nullable();
-            $table->string('price');
-            $table->string('rooms');
+            $table->unsignedBigInteger('price');
+            $table->unsignedBigInteger('total_amount');
+            $table->unsignedInteger('rooms');
             $table->text('images');
             $table->boolean('availability')->default(true);
-            $table->string('bathrooms');
+            $table->unsignedInteger('bathrooms');
             $table->boolean('showers')->default(true);
             $table->string('aminities');
             $table->enum('apartment_type', ['House', 'Apartment', 'Hotel', 'Letting', 'Other']);

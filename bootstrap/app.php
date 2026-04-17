@@ -11,7 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // PayFast POSTs to /payfast/notify from their own servers — no browser
+        // session or CSRF token is involved, so exclude it from the CSRF check.
+        $middleware->validateCsrfTokens(except: [
+            'payfast/notify',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

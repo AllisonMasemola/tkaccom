@@ -94,8 +94,9 @@
     <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
         <div class="flex shrink-0 items-center">
             <img src="{{ asset('pics/logo/logo.png') }}" alt="TTK Cape Accommodation Logo" class="h-8 w-auto" />
+            <div class="text-2xl font-black tracking-tighter text-slate-900">TK Cape Accommodation</div>
+
         </div>
-        <div class="text-2xl font-black tracking-tighter text-slate-900">TK Cape Accommodation</div>
         <div class="hidden md:flex items-center space-x-8">
             <a class="{{ request()->routeIs('home') ? $activeClass : $inactiveClass }}" href="{{ route('home') }}">Home</a>
             <a class="{{ request()->routeIs('accommodation') ? $activeClass : $inactiveClass }}" href="{{ route('accommodation') }}">Accommodations</a>

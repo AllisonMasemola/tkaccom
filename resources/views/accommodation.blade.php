@@ -10,47 +10,110 @@
         </p>
     </header>
     <div class="flex flex-col lg:flex-row gap-12">
-        <!-- Sidebar Filters -->
+        {{--
+            Sidebar Filters — powered by Laravel Purity.
+            All inputs live inside a GET form. On submit, Purity's filter()
+            scope in the model picks up the ?filters[...] query params.
+
+            Purity operator syntax:
+              Property type  → filters[apartment_type][$in][]=House
+              Min bedrooms   → filters[rooms][$gte]=2
+              Max price      → filters[price][$lte]=10000
+        --}}
         <aside class="w-full lg:w-64 flex-shrink-0 space-y-10">
-            <section>
-                <h3 class="font-headline font-bold text-sm tracking-widest uppercase mb-6 text-on-surface-variant">Property Type</h3>
-                <div class="space-y-3">
-                    <label class="flex items-center group cursor-pointer">
-                        <input checked="" class="rounded-sm border-outline-variant text-secondary focus:ring-secondary mr-3 w-5 h-5" type="checkbox"/>
-                        <span class="text-sm font-medium text-on-surface group-hover:text-secondary transition-colors">Villa</span>
-                    </label>
-                    <label class="flex items-center group cursor-pointer">
-                        <input class="rounded-sm border-outline-variant text-secondary focus:ring-secondary mr-3 w-5 h-5" type="checkbox"/>
-                        <span class="text-sm font-medium text-on-surface group-hover:text-secondary transition-colors">Apartment</span>
-                    </label>
-                    <label class="flex items-center group cursor-pointer">
-                        <input class="rounded-sm border-outline-variant text-secondary focus:ring-secondary mr-3 w-5 h-5" type="checkbox"/>
-                        <span class="text-sm font-medium text-on-surface group-hover:text-secondary transition-colors">Estate</span>
-                    </label>
+            <form method="GET" action="{{ route('accommodation') }}" id="filter-form">
+
+                {{-- Property Type — checkboxes (multi-select via $in) --}}
+                <section>
+                    <h3 class="font-headline font-bold text-sm tracking-widest uppercase mb-6 text-on-surface-variant">Property Type</h3>
+                    <div class="space-y-3">
+                        @php
+                            // Must match the apartment_type enum in the DB migration.
+                            $typeOptions = ['House', 'Apartment', 'Hotel', 'Letting', 'Other'];
+                            $activeTypes = request()->input('filters.apartment_type.$in', []);
+                        @endphp
+                        @foreach ($typeOptions as $type)
+                        <label class="flex items-center group cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="filters[apartment_type][$in][]"
+                                value="{{ $type }}"
+                                {{ in_array($type, (array) $activeTypes) ? 'checked' : '' }}
+                                class="filter-input rounded-sm border-outline-variant text-secondary focus:ring-secondary mr-3 w-5 h-5"
+                            />
+                            <span class="text-sm font-medium text-on-surface group-hover:text-secondary transition-colors">{{ $type }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                </section>
+
+                {{-- Bedrooms — minimum count via $gte, styled as radio buttons --}}
+                <section class="mt-10">
+                    <h3 class="font-headline font-bold text-sm tracking-widest uppercase mb-6 text-on-surface-variant">Bedrooms</h3>
+                    @php $activeBeds = request()->input('filters.rooms.$gte', ''); @endphp
+                    <div class="flex flex-wrap gap-2">
+                        @foreach ([1, 2, 4, 6] as $beds)
+                        <label class="cursor-pointer">
+                            <input
+                                type="radio"
+                                name="filters[rooms][$gte]"
+                                value="{{ $beds }}"
+                                {{ (string)$activeBeds === (string)$beds ? 'checked' : '' }}
+                                class="filter-input sr-only peer"
+                            />
+                            <span class="px-4 py-2 text-xs font-bold rounded-full
+                                peer-checked:bg-secondary peer-checked:text-on-secondary
+                                bg-surface-container-high text-on-surface-variant
+                                hover:bg-surface-variant transition-colors inline-block">
+                                {{ $beds }}+
+                            </span>
+                        </label>
+                        @endforeach
+                    </div>
+                </section>
+
+                {{-- Price Range — maximum price via $lte --}}
+                <section class="mt-10">
+                    <h3 class="font-headline font-bold text-sm tracking-widest uppercase mb-6 text-on-surface-variant">Price Range</h3>
+                    @php $activePrice = request()->input('filters.price.$lte', 25000); @endphp
+                    <input
+                        type="range"
+                        id="priceRange"
+                        name="filters[price][$lte]"
+                        min="500"
+                        max="25000"
+                        step="1000"
+                        value="{{ $activePrice }}"
+                        class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-secondary"
+                        oninput="document.getElementById('priceOutput').textContent = 'R ' + Number(this.value).toLocaleString()"
+                        onchange="document.getElementById('filter-form').submit()"
+                    />
+                    <p id="priceOutput" class="mt-2 text-sm text-on-surface-variant">
+                        R {{ number_format($activePrice, 0, '.', ' ') }}
+                    </p>
+                </section>
+
+                {{-- Clear all — plain link resets to unfiltered listing --}}
+                <div class="pt-6 mt-6 border-t border-outline-variant/20">
+                    <a
+                        href="{{ route('accommodation') }}"
+                        class="w-full py-3 text-sm font-bold text-secondary border border-secondary/20 rounded-lg hover:bg-secondary/5 transition-colors text-center block">
+                        Clear All Filters
+                    </a>
                 </div>
-            </section>
-            <section>
-                <h3 class="font-headline font-bold text-sm tracking-widest uppercase mb-6 text-on-surface-variant">Bedrooms</h3>
-                <div class="flex flex-wrap gap-2">
-                    <button class="px-4 py-2 bg-secondary text-on-secondary text-xs font-bold rounded-full">1+</button>
-                    <button class="px-4 py-2 bg-surface-container-high text-on-surface-variant text-xs font-bold rounded-full hover:bg-surface-variant transition-colors">2+</button>
-                    <button class="px-4 py-2 bg-surface-container-high text-on-surface-variant text-xs font-bold rounded-full hover:bg-surface-variant transition-colors">4+</button>
-                    <button class="px-4 py-2 bg-surface-container-high text-on-surface-variant text-xs font-bold rounded-full hover:bg-surface-variant transition-colors">6+</button>
-                </div>
-            </section>
-            <section>
-                <h3 class="font-headline font-bold text-sm tracking-widest uppercase mb-6 text-on-surface-variant">Price Range</h3>
-                <input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-secondary" max="50000" min="5000" step="1000" type="range"/>
-                <div class="flex justify-between mt-4 text-xs font-bold text-on-surface-variant">
-                    <span>R5,000</span>
-                    <span>R50,000+</span>
-                </div>
-            </section>
-            <div class="pt-6 border-t border-outline-variant/20">
-                <button class="w-full py-3 text-sm font-bold text-secondary border border-secondary/20 rounded-lg hover:bg-secondary/5 transition-colors">
-                    Clear All Filters
-                </button>
-            </div>
+
+            </form>
+
+            {{-- Auto-submit: checkboxes and bedroom radios submit on change.
+                 The price range uses onchange (fires on pointer release) directly
+                 on the input so there's no redundant listener here. --}}
+            <script>
+              document.querySelectorAll('#filter-form .filter-input').forEach(function (input) {
+                input.addEventListener('change', function () {
+                  document.getElementById('filter-form').submit();
+                });
+              });
+            </script>
         </aside>
         <!-- Main Listing Grid -->
         <div class="flex-1">
@@ -96,7 +159,7 @@
                             <a href="{{ route('accommodationInfo', $property->id) }}" class="flex-1 py-3 text-xs font-bold uppercase tracking-widest text-on-surface border-b border-outline-variant/30 hover:border-secondary transition-colors text-center">
                                 View Details
                             </a>
-                            <a href="{{ route('checkout', $property->id) }}" class="flex-1 py-3 bg-gradient-to-r from-secondary to-secondary-container text-white text-xs font-bold uppercase tracking-widest rounded-lg active:scale-95 transition-transform text-center">
+                            <a href="{{ route('checkout', ['type' => 'accommodation', 'id' => $property->id]) }}" class="flex-1 py-3 bg-gradient-to-r from-secondary to-secondary-container text-white text-xs font-bold uppercase tracking-widest rounded-lg active:scale-95 transition-transform text-center">
                                 Book Now
                             </a>
                         </div>

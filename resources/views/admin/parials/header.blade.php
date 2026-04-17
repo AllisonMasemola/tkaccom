@@ -115,9 +115,9 @@
                 <span class="material-symbols-outlined">event</span>
                 Events
             </a>
-            <a class="{{ request()->routeIs('admin.bookings.*') ? $activeClass : $inactiveClass }}" href="#">
+            <a class="{{ request()->routeIs('admin.bookings.*') ? $activeClass : $inactiveClass }}" href="{{ route('admin.bookings.adminIndex') }}">
                 <span class="material-symbols-outlined">calendar_month</span>
-                Bookings
+                Manage Bookings
             </a>
         </nav>
         <div class="mt-auto pt-6 border-t border-[#eeeeee] dark:border-slate-800 space-y-1">

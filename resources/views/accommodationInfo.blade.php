@@ -210,7 +210,7 @@
                 {{--<button class="w-full bg-gradient-to-r from-secondary to-secondary-container text-on-secondary py-4 rounded-lg font-headline font-black text-lg tracking-tight editorial-shadow transform active:scale-95 transition-all duration-200">--}}
                 {{--    Book This Villa--}}
                 {{--</button>--}}
-                <a href="{{ route('checkout', $property->id) }}" style="min-width: 100%" class="w-full bg-gradient-to-r from-secondary to-secondary-container text-on-secondary py-4 rounded-lg font-headline font-black text-lg tracking-tight editorial-shadow transform active:scale-95 transition-all duration-200">
+                <a href="{{ route('checkout', ['type' => 'accommodation', 'id' => $property->id]) }}" style="min-width: 100%" class="w-full bg-gradient-to-r from-secondary to-secondary-container text-on-secondary py-4 rounded-lg font-headline font-black text-lg tracking-tight editorial-shadow transform active:scale-95 transition-all duration-200">
                     Book Now
                 </a>
                 <p class="text-center text-[11px] text-on-surface-variant mt-4">
