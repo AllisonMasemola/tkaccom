@@ -141,7 +141,7 @@ class BookingController extends Controller
     /**
      * Admin: confirm a pending booking.
      *
-     * Transitions status → confirmed, generates the PayFast payment URL,
+     * Transitions status → confirmed, generates the Paystack payment URL,
      * and emails it to the customer so they can complete payment.
      */
     public function confirm(Booking $booking): RedirectResponse
@@ -157,7 +157,7 @@ class BookingController extends Controller
             'payment_status' => 'awaiting_payment',
         ]);
 
-        // Build the payment page URL; PayFastController renders the auto-submit form
+        // Build the payment page URL; PaystackController initialises the Paystack transaction
         $paymentUrl = route('booking.payment', $booking->booking_id);
 
         try {

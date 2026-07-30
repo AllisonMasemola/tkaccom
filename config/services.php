@@ -34,11 +34,10 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-    'payfast' => [
-        'merchant_id' => env('PAYFAST_MERCHANT_ID'),
-        'merchant_key' => env('PAYFAST_MERCHANT_KEY'),
-        'passphrase' => env('PAYFAST_PASSPHRASE'),
-        'sandbox' => env('PAYFAST_SANDBOX', true),
+    'paystack' => [
+        'public_key' => env('PAYSTACK_PUBLIC_KEY'),
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+        'base_url' => env('PAYSTACK_BASE_URL', 'https://api.paystack.co'),
+        'currency' => env('PAYSTACK_CURRENCY', 'ZAR'),
     ],
-
 ];

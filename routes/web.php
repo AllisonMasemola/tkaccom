@@ -5,7 +5,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Dashboard\AdminAccommodationController;
 use App\Http\Controllers\Dashboard\AdminPrestigeController;
-use App\Http\Controllers\PayFastController;
+use App\Http\Controllers\Dashboard\AdminEmailsController;
+use App\Http\Controllers\PaystackController;
 use App\Http\Controllers\PrestigeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -23,16 +24,16 @@ Route::get('/accommodation/{accommodationId}/accommodation-info', [Accommodation
 Route::get('/transport', [PrestigeController::class, 'index'])->name('transport');
 Route::get('/car/{carId}/car-info', [PrestigeController::class, 'show'])->name('carInfo');
 
-// PayFast payment gateway hooks.
-// {bookingRef} is embedded into return/cancel URLs at signing time (payBooking()),
-// so PayFast returns the customer straight back to their booking context.
-Route::get('/payfast/return/{bookingRef}', [PayFastController::class, 'return'])->name('payfast.return');
-Route::get('/payfast/cancel/{bookingRef}', [PayFastController::class, 'cancel'])->name('payfast.cancel');
-Route::post('/payfast/notify', [PayFastController::class, 'notify'])->name('payfast.notify');
+// Paystack payment gateway hooks.
+// {bookingRef} is embedded into the callback URL when the transaction is initialised,
+// so Paystack returns the customer straight back to their booking context.
+Route::get('/paystack/return/{bookingRef}', [PaystackController::class, 'return'])->name('paystack.return');
+Route::get('/paystack/cancel/{bookingRef}', [PaystackController::class, 'cancel'])->name('paystack.cancel');
+Route::post('/paystack/webhook', [PaystackController::class, 'notify'])->name('paystack.webhook');
 
 // Booking lifecycle pages — publicly accessible via booking reference
 Route::get('/booking/{bookingRef}/success', [BookingController::class, 'success'])->name('booking.success');
-Route::get('/booking/{bookingRef}/payment', [PayFastController::class, 'payBooking'])->name('booking.payment');
+Route::get('/booking/{bookingRef}/payment', [PaystackController::class, 'payBooking'])->name('booking.payment');
 
 Route::get('/events', function () {
     return view('events');
@@ -43,12 +44,8 @@ Route::get('/contact', function () {
     return view('contact');
 })->name('contact');
 
-// Public booking success & payment pages
-Route::get('/booking/{bookingRef}/success', [BookingController::class, 'success'])->name('booking.success');
-Route::get('/booking/{bookingRef}/payment', [PayFastController::class, 'payBooking'])->name('booking.payment');
-
 // {type} = accommodation | prestige, {id} = model primary key
-Route::get('/checkout/{type}/{id}', [PayFastController::class, 'pay'])
+Route::get('/checkout/{type}/{id}', [PaystackController::class, 'pay'])
     ->where('type', 'accommodation|prestige')
     ->where('id', '[0-9]+')
     ->name('checkout');
@@ -82,6 +79,10 @@ Route::middleware('auth')->group(function () {
             'show'    => 'admin.prestige.show',
             'update'  => 'admin.prestige.update',
             'destroy' => 'admin.prestige.destroy',
+        ]);
+        // Prestige admin CRUD
+        Route::apiResource('/admin-emails', AdminEmailsController::class)->names([
+            'index'   => 'admin.emails.index',
         ]);
 
         // Booking admin management (store is public above)

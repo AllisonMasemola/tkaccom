@@ -15,7 +15,7 @@ class BookingConfirmed extends Mailable
 
     /**
      * @param  Booking  $booking      The confirmed booking (with bookable relation loaded)
-     * @param  string   $paymentUrl   The fully-formed PayFast payment page URL
+     * @param  string   $paymentUrl   The URL that initiates the Paystack checkout
      */
     public function __construct(
         public readonly Booking $booking,

@@ -20,6 +20,7 @@ class Booking extends Model
         'customer_phone',
         'status',
         'payment_status',
+        'payment_reference',
         'total_amount',
         'special_request',
         'email_notification',
@@ -30,7 +31,7 @@ class Booking extends Model
         'date_out'     => 'datetime',
         // Explicit string cast to prevent boolean coercion from the old schema
         'status'       => 'string',
-        // Stored as DECIMAL(10,2); cast to float for arithmetic use in PayFast etc.
+        // Stored as DECIMAL(10,2); cast to float for arithmetic use in payment flows.
         'total_amount' => 'float',
     ];
 
