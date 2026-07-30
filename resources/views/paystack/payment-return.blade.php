@@ -4,20 +4,23 @@
   $isAccommodation = str_ends_with($booking->bookable_type, 'Accommodation');
   $displayName     = $isAccommodation ? $booking->bookable?->name : $booking->bookable?->car_name;
   $typeLabel       = $isAccommodation ? 'Accommodation' : 'Prestige Vehicle';
+  $isPaid          = $booking->payment_status === 'paid';
 @endphp
 
 <main class="max-w-3xl mx-auto px-8 py-24 text-center">
-  <!-- Cancelled Icon -->
-  <div class="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-8">
-    <span class="material-symbols-outlined text-error text-4xl" style="font-variation-settings: 'FILL' 1;">
-      cancel
+  <!-- Processing Icon -->
+  <div class="w-20 h-20 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-8">
+    <span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings: 'FILL' 1;">
+      {{ $isPaid ? 'check_circle' : 'payments' }}
     </span>
   </div>
 
-  <h1 class="text-4xl font-extrabold tracking-tight text-on-surface mb-4">Payment Cancelled</h1>
+  <h1 class="text-4xl font-extrabold tracking-tight text-on-surface mb-4">
+    {{ $isPaid ? 'Payment Successful' : 'Payment Received' }}
+  </h1>
   <p class="text-on-surface-variant text-lg mb-12 leading-relaxed">
-    You cancelled the payment. Your booking is still confirmed — you can complete payment anytime using
-    the link in your confirmation email sent to <strong>{{ $booking->customer_email }}</strong>.
+    Thank you! Your Paystack payment is being processed. You'll receive a confirmation email at
+    <strong>{{ $booking->customer_email }}</strong> once it's verified.
   </p>
 
   <!-- Booking Summary Card -->
@@ -30,6 +33,13 @@
       <span class="text-on-surface-variant">Booking Reference</span>
       <span class="font-bold font-mono text-secondary tracking-tight">{{ $booking->booking_id }}</span>
     </div>
+
+    @if($booking->payment_reference)
+      <div class="flex justify-between text-sm">
+        <span class="text-on-surface-variant">Payment Reference</span>
+        <span class="font-medium font-mono">{{ $booking->payment_reference }}</span>
+      </div>
+    @endif
 
     <div class="flex justify-between text-sm">
       <span class="text-on-surface-variant">Type</span>
@@ -55,26 +65,20 @@
 
     @if($booking->total_amount)
       <div class="flex justify-between text-sm pt-3 border-t border-outline-variant/10">
-        <span class="font-bold text-on-surface">Amount Due</span>
+        <span class="font-bold text-on-surface">Amount Paid</span>
         <span class="font-extrabold text-secondary">R{{ number_format($booking->total_amount, 2) }}</span>
       </div>
     @endif
-
-    <div class="flex justify-between text-sm pt-1">
-      <span class="text-on-surface-variant">Payment Status</span>
-      <span class="inline-flex items-center gap-1 text-xs font-bold bg-error/10 text-error px-2 py-1 rounded-full uppercase tracking-tighter">
-        <span class="w-1.5 h-1.5 rounded-full bg-error inline-block"></span>
-        Unpaid
-      </span>
-    </div>
   </div>
 
+  {{-- The Paystack webhook is the authoritative source for payment_status; it may arrive
+       slightly after this redirect, so a pending state here is not an error. --}}
   <div class="bg-surface-container-high rounded-xl p-6 text-left mb-12">
     <div class="flex items-start gap-3">
-      <span class="material-symbols-outlined text-secondary text-xl mt-0.5">info</span>
+      <span class="material-symbols-outlined text-secondary text-xl mt-0.5">schedule</span>
       <p class="text-sm text-on-surface-variant leading-relaxed">
-        Your booking reservation is still held. Use the payment link in your confirmation email to
-        complete your payment. If you need help, contact us with reference
+        Payment confirmation typically arrives within a few minutes. If you don't receive an email, please
+        check your spam folder or contact us with your booking reference
         <strong class="text-on-surface font-mono">{{ $booking->booking_id }}</strong>.
       </p>
     </div>
@@ -88,3 +92,4 @@
 </main>
 
 @include('partials/footer')
+

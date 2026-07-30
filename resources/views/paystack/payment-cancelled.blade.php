@@ -7,17 +7,17 @@
 @endphp
 
 <main class="max-w-3xl mx-auto px-8 py-24 text-center">
-  <!-- Processing Icon -->
-  <div class="w-20 h-20 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-8">
-    <span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings: 'FILL' 1;">
-      payments
+  <!-- Cancelled Icon -->
+  <div class="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-8">
+    <span class="material-symbols-outlined text-error text-4xl" style="font-variation-settings: 'FILL' 1;">
+      cancel
     </span>
   </div>
 
-  <h1 class="text-4xl font-extrabold tracking-tight text-on-surface mb-4">Payment Received</h1>
+  <h1 class="text-4xl font-extrabold tracking-tight text-on-surface mb-4">Payment Cancelled</h1>
   <p class="text-on-surface-variant text-lg mb-12 leading-relaxed">
-    Thank you! Your payment is being processed. You'll receive a confirmation email at
-    <strong>{{ $booking->customer_email }}</strong> once it's verified.
+    You cancelled the payment. Your booking is still confirmed — you can complete payment anytime using
+    the link in your confirmation email sent to <strong>{{ $booking->customer_email }}</strong>.
   </p>
 
   <!-- Booking Summary Card -->
@@ -55,31 +55,45 @@
 
     @if($booking->total_amount)
       <div class="flex justify-between text-sm pt-3 border-t border-outline-variant/10">
-        <span class="font-bold text-on-surface">Amount Paid</span>
+        <span class="font-bold text-on-surface">Amount Due</span>
         <span class="font-extrabold text-secondary">R{{ number_format($booking->total_amount, 2) }}</span>
       </div>
     @endif
+
+    <div class="flex justify-between text-sm pt-1">
+      <span class="text-on-surface-variant">Payment Status</span>
+      <span class="inline-flex items-center gap-1 text-xs font-bold bg-error/10 text-error px-2 py-1 rounded-full uppercase tracking-tighter">
+        <span class="w-1.5 h-1.5 rounded-full bg-error inline-block"></span>
+        Unpaid
+      </span>
+    </div>
   </div>
 
-  {{-- Note: payment_status is updated by the PayFast IPN (server-to-server),
-       not by this page. The IPN may arrive slightly after the browser redirect,
-       so we avoid showing a status that could be stale. --}}
   <div class="bg-surface-container-high rounded-xl p-6 text-left mb-12">
     <div class="flex items-start gap-3">
-      <span class="material-symbols-outlined text-secondary text-xl mt-0.5">schedule</span>
+      <span class="material-symbols-outlined text-secondary text-xl mt-0.5">info</span>
       <p class="text-sm text-on-surface-variant leading-relaxed">
-        Payment confirmation typically arrives within a few minutes. If you don't receive an email, please
-        check your spam folder or contact us with your booking reference
+        Your booking reservation is still held. Use the payment link in your confirmation email to
+        complete your payment. If you need help, contact us with reference
         <strong class="text-on-surface font-mono">{{ $booking->booking_id }}</strong>.
       </p>
     </div>
   </div>
 
-  <a href="{{ route('home') }}"
-     class="inline-flex items-center gap-2 text-secondary font-medium hover:underline transition-all">
-    <span class="material-symbols-outlined text-sm">arrow_back</span>
-    Back to Home
-  </a>
+  <div class="flex items-center justify-center gap-6">
+    <a href="{{ route('booking.payment', $booking->booking_id) }}"
+       class="inline-flex items-center gap-2 bg-secondary text-on-secondary px-6 py-3 rounded-full font-medium hover:opacity-90 transition-all">
+      <span class="material-symbols-outlined text-sm">payments</span>
+      Try Payment Again
+    </a>
+
+    <a href="{{ route('home') }}"
+       class="inline-flex items-center gap-2 text-secondary font-medium hover:underline transition-all">
+      <span class="material-symbols-outlined text-sm">arrow_back</span>
+      Back to Home
+    </a>
+  </div>
 </main>
 
 @include('partials/footer')
+

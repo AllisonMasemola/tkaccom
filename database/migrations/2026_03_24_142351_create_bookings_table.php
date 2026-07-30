@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('customer_email')->nullable();
             $table->string('customer_phone')->nullable();
             $table->boolean('status')->default(false); // This is accept whather the admin accepts the booking or declines it
-            $table->string('payment_status')->nullable();
+            $table->enum('payment_status', ['pending', 'paid', 'failed', 'cancelled', 'refunded'])->default('pending');
             $table->text('special_request')->nullable();
             $table->string('email_notification')->nullable();
             $table->timestamps();
